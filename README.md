@@ -56,7 +56,7 @@ def vocabulary_quiz(vocab):
             st.success("Correct!")
         else:
             st.error(f"Wrong! The correct answer is: {correct_meaning}")
-    
+
 # 文脈に適した単語を選ぶ問題（難易度別）
 def contextual_quiz(contextual_vocab):
     # ランダムに文脈と選択肢を選ぶ
@@ -94,6 +94,3 @@ def start_quiz():
 # クイズを実行
 if __name__ == "__main__":
     start_quiz()
-
-
-
