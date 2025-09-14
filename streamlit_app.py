@@ -534,10 +534,12 @@ def main_quiz():
             level_map = {"基礎": "basic", "中級": "intermediate", "上級": "advanced"}
             contextual_quiz(level_map[level])
     
-    # 新しい問題ボタン
-    st.write("---")
-    if st.button("🔄 新しい問題"):
-        st.rerun()
+    # 🔄 新しい問題ボタンを押したときだけ問題を進める
+st.write("---")
+if st.button("🔄 新しい問題"):
+    st.session_state.vocab_current_question += 1  # ✅ ここで問題番号を進める
+    st.rerun()
+
 
 def show_reference():
     """参考資料ページ"""
