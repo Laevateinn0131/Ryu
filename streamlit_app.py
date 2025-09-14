@@ -434,6 +434,15 @@ def contextual_quiz(level):
         st.session_state.context_current_question += 1
 
         st.info(f"文脈スコア: {st.session_state.score}/{st.session_state.total_questions}")
+        # --- 上で関数定義をしていると仮定 ---
+
+def main_quiz():
+    st.title("🎓 高校英語総合学習アプリ")
+    # 残りの処理...
+
+# --- 最後に呼び出し ---
+if __name__ == "__main__":
+    main_quiz()
 
 
 def show_reference():
