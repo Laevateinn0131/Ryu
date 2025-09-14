@@ -1,5 +1,7 @@
 import random
 import streamlit as st
+if 'current_question' not in st.session_state:
+    st.session_state.current_question = 0
 
 # 基礎レベルの単語（高校1年生向け）
 basic_vocabulary = {
