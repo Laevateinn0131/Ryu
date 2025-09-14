@@ -573,13 +573,19 @@ def show_statistics():
                 st.error("💪 頑張りましょう！")
         
         if st.button("📈 スコアリセット"):
+            # 全ての問題関連のセッション状態をクリア
+            keys_to_delete = []
+            for key in st.session_state.keys():
+                if key.startswith(('question_', 'answered_', 'show_result_', 'result_message_', 'result_type_', 'user_answer_')):
+                    keys_to_delete.append(key)
+            
+            for key in keys_to_delete:
+                del st.session_state[key]
+            
             st.session_state.score = 0
             st.session_state.total_questions = 0
             st.session_state.grammar_score = 0
             st.session_state.grammar_total = 0
-            st.session_state.current_question = None
-            st.session_state.question_answered = False
-            st.session_state.show_result = False
             st.success("リセット完了！")
             st.rerun()
 
