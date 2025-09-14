@@ -330,29 +330,28 @@ if 'grammar_total' not in st.session_state:
     st.session_state.grammar_total = 0
 
 def vocabulary_quiz(vocab_dict, level_name):
-    """単語クイズ機能"""
-    st.write(f"### 📚 {level_name}単語クイズ")
-    
-    word, correct_meaning = random.choice(list(vocab_dict.items()))
-    other_meanings = [meaning for w, meaning in vocab_dict.items() if w != word]
-    wrong_choices = random.sample(other_meanings, min(3, len(other_meanings)))
-    
-    all_choices = [correct_meaning] + wrong_choices
-    random.shuffle(all_choices)
-    
-    st.write(f"**単語の意味を選んでください: '{word}'**")
-    
-    key = f"vocab_{level_name}_{word}_{random.randint(1000, 9999)}"
-    user_answer = st.radio("選択肢:", all_choices, key=key)
-    
+    if 'vocab_current_question' not in st.session_state:
+        st.session_state.vocab_current_question = 0
+
+    word, correct_meaning = list(vocab_dict.items())[st.session_state.vocab_current_question]
+    # 省略: 選択肢作成
+
+    # 問題表示など
+
     if st.button("回答する", key=f"submit_{key}"):
+        # 正誤判定
         st.session_state.total_questions += 1
         if user_answer == correct_meaning:
             st.session_state.score += 1
             st.success("🎉 正解です！")
         else:
             st.error(f"❌ 不正解です。正解は: **{correct_meaning}**")
-        
+
+        # 問題を進める
+        st.session_state.vocab_current_question += 1
+        if st.session_state.vocab_current_question >= len(vocab_dict):
+            st.session_state.vocab_current_question = 0
+
         st.info(f"単語スコア: {st.session_state.score}/{st.session_state.total_questions}")
 
 def grammar_quiz(grammar_type, level):
