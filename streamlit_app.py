@@ -578,6 +578,7 @@ def show_reference():
                     - 現在完了形: 過去から現在への継続・完了・経験
                     - 未来完了形: 未来のある時点までの完了
                     - 仮定法: 事実に反する仮定
+                　　""")
             
 def show_progress_tracker():
     """学習進捗追跡ページ"""
@@ -666,35 +667,35 @@ if __name__ == "__main__":
         show_reference()
     else:
         show_progress_tracker()
-                elif grammar_type == "受動態":
-                    st.write("""
-                    **受動態の基本:**
-                    - 基本形: be動詞 + 過去分詞
-                    - 時制に応じてbe動詞を変化
-                    - by + 行為者(省略可能)
-                    """)
-                elif grammar_type == "不定詞・動名詞":
-                    st.write("""
-                    **不定詞と動名詞:**
-                    - 不定詞: to + 動詞の原形
-                    - 動名詞: 動詞のing形(名詞的用法)
-                    - 動詞によって取る形が決まる
-                    """)
-                elif grammar_type == "関係詞":
-                    st.write("""
-                    **関係詞の基本:**
-                    - who/whom: 人が先行詞
-                    - which: 物が先行詞
-                    - that: 人・物両方可能
-                    - where/when: 関係副詞
-                    """)
-                elif grammar_type == "仮定法":
-                    st.write("""
-                    **仮定法:**
-                    - 仮定法過去: 現在の事実に反する仮定
-                    - 仮定法過去完了: 過去の事実に反する仮定
-                    - 混合仮定法: 時制が異なる仮定
-                    """)
+    if grammar_type == "受動態":
+         st.write("""
+        **受動態の基本:**
+        - 基本形: be動詞 + 過去分詞
+        - 時制に応じてbe動詞を変化
+        - by + 行為者(省略可能)           
+        """)
+    elif grammar_type == "不定詞・動名詞":
+        st.write("""
+        **不定詞と動名詞:**
+        - 不定詞: to + 動詞の原形
+        - 動名詞: 動詞のing形(名詞的用法)
+        - 動詞によって取る形が決まる
+        """)
+    elif grammar_type == "関係詞":
+        st.write("""
+        **関係詞の基本:**
+        - who/whom: 人が先行詞
+        - which: 物が先行詞
+        - that: 人・物両方可能
+        - where/when: 関係副詞
+        """)
+    elif grammar_type == "仮定法":
+        st.write("""
+        **仮定法:**
+        - 仮定法過去: 現在の事実に反する仮定
+        - 仮定法過去完了: 過去の事実に反する仮定
+        - 混合仮定法: 時制が異なる仮定
+        """)
     
     with tab3:
         st.header("💡 効果的な学習方法")
