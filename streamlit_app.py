@@ -1,3 +1,78 @@
+import random
+import streamlit as st
+
+# 定期テストレベルの単語と意味
+easy_vocabulary = {
+    "basic": "fundamental or simple",
+    "bizarre": "very strange or unusual",
+    "precise": "exact and accurate",
+    "loyal": "showing strong support",
+    "generous": "willing to give and share",
+    "obvious": "easily understood or seen",
+    "complex": "consisting of many different parts",
+    "humble": "having a modest opinion of oneself",
+    "curious": "eager to know or learn something",
+    "gentle": "kind and mild in manner"
+}
+
+# 全国模試レベルの単語と意味
+hard_vocabulary = {
+    "aberration": "a deviation from what is normal",
+    "sagacious": "wise or shrewd",
+    "perspicacious": "having a ready insight into and understanding of things",
+    "recalcitrant": "stubbornly resisting authority",
+    "obfuscate": "to confuse or make unclear",
+    "ubiquitous": "present everywhere at the same time",
+    "ephemeral": "lasting for a very short time",
+    "fastidious": "very attentive to accuracy and detail",
+    "mendacious": "given to lying or being dishonest",
+    "sanguine": "optimistic or confident about the future"
+}
+
+# 定期テストレベルの文脈問題（正解は最初の選択肢）
+easy_contextual_vocabulary = {
+    "She is very __ and always helps her classmates without expecting anything in return.": 
+        {
+            "choices": ["generous", "recalcitrant", "sagacious", "perspicacious"],
+            "explanation": "「generous」は「寛大な、気前の良い」という意味で、見返りを期待せず助ける行為を表します。"
+        },
+    "The detective was very __ and quickly solved the complicated case.": 
+        {
+            "choices": ["sagacious", "bizarre", "precise", "basic"],
+            "explanation": "「sagacious」は「賢明な、洞察力のある」という意味で、複雑な事件を解決する能力を表します。"
+        },
+    "His instructions were so __ that everyone understood exactly what to do.": 
+        {
+            "choices": ["precise", "bizarre", "complex", "humble"],
+            "explanation": "「precise」は「正確な、明確な」という意味で、理解しやすい指示を表します。"
+        },
+    "The magician's __ performance left the audience completely amazed.": 
+        {
+            "choices": ["bizarre", "basic", "obvious", "gentle"],
+            "explanation": "「bizarre」は「奇妙な、異様な」という意味で、驚くようなマジックパフォーマンスを表します。"
+        },
+    "Despite his great achievements, he remained __ and never boasted about his success.": 
+        {
+            "choices": ["humble", "curious", "complex", "loyal"],
+            "explanation": "「humble」は「謙虚な」という意味で、成功しても自慢しない態度を表します。"
+        },
+    "The __ answer to the math problem was right in front of us.": 
+        {
+            "choices": ["obvious", "complex", "bizarre", "humble"],
+            "explanation": "「obvious」は「明らかな、当然の」という意味で、すぐに分かる答えを表します。"
+        },
+    "She spoke in a __ voice so as not to wake the baby.": 
+        {
+            "choices": ["gentle", "complex", "obvious", "curious"],
+            "explanation": "「gentle」は「優しい、穏やかな」という意味で、赤ちゃんを起こさない声のトーンを表します。"
+        },
+    "The child was __ about everything and asked many questions.": 
+        {
+            "choices": ["curious", "loyal", "humble", "basic"],
+            "explanation": "「curious」は「好奇心旺盛な」という意味で、多くの質問をする姿勢を表します。"
+        }
+}
+
 # 全国模試レベルの文脈問題（正解は最初の選択肢）
 hard_contextual_vocabulary = {
     "その生徒の__な行動は、規則に従うことを頑固に拒んだため、クラスで問題を引き起こした。": 
@@ -38,77 +113,13 @@ hard_contextual_vocabulary = {
     "彼の市場動向に対する__な分析は、すべての投資家を感銘させた。": 
         {
             "choices": ["perspicacious", "recalcitrant", "ephemeral", "aberration"],
-            "explanation": "import random
-import streamlit as st
-
-# 定期テストレベルの単語と意味
-easy_vocabulary = {
-    "basic": "fundamental or simple",
-    "bizarre": "very strange or unusual",
-    "precise": "exact and accurate",
-    "loyal": "showing strong support",
-    "generous": "willing to give and share",
-    "obvious": "easily understood or seen",
-    "complex": "consisting of many different parts",
-    "humble": "having a modest opinion of oneself",
-    "curious": "eager to know or learn something",
-    "gentle": "kind and mild in manner"
-}
-
-# 全国模試レベルの単語と意味
-hard_vocabulary = {
-    "aberration": "a deviation from what is normal",
-    "sagacious": "wise or shrewd",
-    "perspicacious": "having a ready insight into and understanding of things",
-    "recalcitrant": "stubbornly resisting authority",
-    "obfuscate": "to confuse or make unclear",
-    "ubiquitous": "present everywhere at the same time",
-    "ephemeral": "lasting for a very short time",
-    "fastidious": "very attentive to accuracy and detail",
-    "mendacious": "given to lying or being dishonest",
-    "sanguine": "optimistic or confident about the future"
-}
-
-# 定期テストレベルの文脈問題（正解は最初の選択肢）
-easy_contextual_vocabulary = {
-    "She is very __ and always helps her classmates without expecting anything in return.": 
-        ["generous", "recalcitrant", "sagacious", "perspicacious"],
-    "The detective was very __ and quickly solved the complicated case.": 
-        ["sagacious", "bizarre", "precise", "basic"],
-    "His instructions were so __ that everyone understood exactly what to do.": 
-        ["precise", "bizarre", "complex", "humble"],
-    "The magician's __ performance left the audience completely amazed.": 
-        ["bizarre", "basic", "obvious", "gentle"],
-    "Despite his great achievements, he remained __ and never boasted about his success.": 
-        ["humble", "curious", "complex", "loyal"],
-    "The __ answer to the math problem was right in front of us.": 
-        ["obvious", "complex", "bizarre", "humble"],
-    "She spoke in a __ voice so as not to wake the baby.": 
-        ["gentle", "complex", "obvious", "curious"],
-    "The child was __ about everything and asked many questions.": 
-        ["curious", "loyal", "humble", "basic"]
-}
-
-# 全国模試レベルの文脈問題（正解は最初の選択肢）
-hard_contextual_vocabulary = {
-    "The student's __ behavior caused problems in the class as he refused to follow any rules.": 
-        ["recalcitrant", "loyal", "generous", "sanguine"],
-    "The witness tried to __ the truth, but the detective could still piece together what happened.": 
-        ["obfuscate", "precise", "loyal", "bizarre"],
-    "Her __ nature made her very particular about how her desk was organized.": 
-        ["fastidious", "ephemeral", "ubiquitous", "mendacious"],
-    "The __ beauty of cherry blossoms reminds us to appreciate life's fleeting moments.": 
-        ["ephemeral", "ubiquitous", "fastidious", "sanguine"],
-    "Smartphones have become __ in modern society, found in nearly every pocket.": 
-        ["ubiquitous", "ephemeral", "mendacious", "aberration"],
-    "The __ politician's lies were eventually exposed by investigative journalists.": 
-        ["mendacious", "sanguine", "sagacious", "perspicacious"],
-    "Despite the economic crisis, she remained __ about the company's future prospects.": 
-        ["sanguine", "recalcitrant", "mendacious", "fastidious"],
-    "His __ analysis of the market trends impressed all the investors.": 
-        ["perspicacious", "recalcitrant", "ephemeral", "aberration"],
-    "The sudden thunderstorm was an __ in the otherwise perfect weather pattern.": 
-        ["aberration", "ubiquitous", "sanguine", "perspicacious"]
+            "explanation": "「perspicacious」は「洞察力のある、鋭い」という意味で、市場を深く理解する能力を表します。"
+        },
+    "突然の雷雨は、それまで完璧だった天候パターンの__だった。": 
+        {
+            "choices": ["aberration", "ubiquitous", "sanguine", "perspicacious"],
+            "explanation": "「aberration」は「異常、逸脱」という意味で、通常のパターンから外れた現象を表します。"
+        }
 }
 
 # スコア管理用のセッション状態初期化
@@ -157,7 +168,9 @@ def vocabulary_quiz(vocab, quiz_type="meaning"):
 # 文脈に適した単語を選ぶ問題（難易度別）
 def contextual_quiz(contextual_vocab, quiz_type="context"):
     # ランダムに文脈と選択肢を選ぶ
-    sentence, choices = random.choice(list(contextual_vocab.items()))
+    sentence, data = random.choice(list(contextual_vocab.items()))
+    choices = data["choices"]
+    explanation = data["explanation"]
     
     # 選択肢をシャッフル（正解の位置を記録）
     correct_answer = choices[0]  # 正解は常に最初の選択肢として定義
@@ -179,8 +192,10 @@ def contextual_quiz(contextual_vocab, quiz_type="context"):
         if user_answer == correct_answer:
             st.session_state.score += 1
             st.success("🎉 Correct!")
+            st.info(f"💡 {explanation}")
         else:
             st.error(f"❌ Wrong! The correct answer is: **{correct_answer}**")
+            st.info(f"💡 {explanation}")
         
         # スコア表示
         st.info(f"Current Score: {st.session_state.score}/{st.session_state.total_questions}")
