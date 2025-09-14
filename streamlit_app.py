@@ -189,29 +189,28 @@ def contextual_quiz(contextual_vocab, quiz_type="context"):
 
     q = st.session_state.current_context_question
     sentence = q["sentence"]
-    choices = q["choices"]
+    shuffled_choices = q["choices"]
     correct_answer = q["correct"]
     explanation = q["explanation"]
 
     st.write("**Question: Choose the word that best fits the blank:**")
     st.write(sentence.replace("__", "______"))
 
-    key = f"context_{quiz_type}_{random.randint(1000, 9999)}"
-    user_answer = st.radio("Choose your answer:", choices, key=key)
+    key = f"context_{quiz_type}_{sentence[:10]}"
+    user_answer = st.radio("Choose your answer:", shuffled_choices, key=key)
 
     if st.button("Submit Answer", key=f"submit_{key}"):
         st.session_state.total_questions += 1
         if user_answer == correct_answer:
             st.session_state.score += 1
             st.success("🎉 Correct!")
-            st.info(f"💡 {explanation}")
         else:
             st.error(f"❌ Wrong! The correct answer is: **{correct_answer}**")
-            st.info(f"💡 {explanation}")
-
+        
+        st.info(f"💡 {explanation}")
         st.info(f"Current Score: {st.session_state.score}/{st.session_state.total_questions}")
 
-        # 次の問題に備えてセッションの問題を削除
+        # 次の問題用にセッションデータを削除
         del st.session_state.current_context_question
 
 # スコアリセット機能
