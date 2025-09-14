@@ -572,13 +572,13 @@ def show_reference():
             with st.expander(f"📖 {grammar_type}"):
                 if grammar_type == "時制":
                     st.write("""
-                    **時制の基本:**
+                    **時制の基本:**         
                     - 現在形: 習慣・真理を表す
                     - 過去形: 過去の一時点の動作・状態
                     - 現在完了形: 過去から現在への継続・完了・経験
                     - 未来完了形: 未来のある時点までの完了
                     - 仮定法: 事実に反する仮定
-                             
+                    """)                                  
             
 def show_progress_tracker():
     """学習進捗追跡ページ"""
