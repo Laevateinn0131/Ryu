@@ -318,97 +318,218 @@ contextual_questions = {
 }
 
 # セッション状態の初期化
-if 'score' not in st.session_state:
-    st.session_state.score = 0
-if 'total_questions' not in st.session_state:
-    st.session_state.total_questions = 0
-if 'grammar_score' not in st.session_state:
-    st.session_state.grammar_score = 0
-if 'grammar_total' not in st.session_state:
-    st.session_state.grammar_total = 0
+def initialize_session_state():
+    if 'score' not in st.session_state:
+        st.session_state.score = 0
+    if 'total_questions' not in st.session_state:
+        st.session_state.total_questions = 0
+    if 'grammar_score' not in st.session_state:
+        st.session_state.grammar_score = 0
+    if 'grammar_total' not in st.session_state:
+        st.session_state.grammar_total = 0
+    if 'current_question' not in st.session_state:
+        st.session_state.current_question = None
+    if 'question_answered' not in st.session_state:
+        st.session_state.question_answered = False
+    if 'show_result' not in st.session_state:
+        st.session_state.show_result = False
+
+def generate_new_question(question_type, level_name=None, vocab_dict=None, grammar_type=None, level=None):
+    """新しい問題を生成する"""
+    if question_type == "vocabulary":
+        word, correct_meaning = random.choice(list(vocab_dict.items()))
+        other_meanings = [meaning for w, meaning in vocab_dict.items() if w != word]
+        wrong_choices = random.sample(other_meanings, min(3, len(other_meanings)))
+        all_choices = [correct_meaning] + wrong_choices
+        random.shuffle(all_choices)
+        
+        return {
+            "type": "vocabulary",
+            "word": word,
+            "correct_answer": correct_meaning,
+            "choices": all_choices,
+            "level_name": level_name
+        }
+    
+    elif question_type == "grammar":
+        if grammar_type not in grammar_questions or level not in grammar_questions[grammar_type]:
+            return None
+        
+        question_data = random.choice(grammar_questions[grammar_type][level])
+        return {
+            "type": "grammar",
+            "question_data": question_data,
+            "grammar_type": grammar_type,
+            "level": level
+        }
+    
+    elif question_type == "context":
+        sentence, data = random.choice(list(contextual_questions[level].items()))
+        choices = data['choices'].copy()
+        correct_answer = choices[0]
+        random.shuffle(choices)
+        
+        return {
+            "type": "context",
+            "sentence": sentence,
+            "correct_answer": correct_answer,
+            "choices": choices,
+            "explanation": data['explanation'],
+            "level": level
+        }
 
 def vocabulary_quiz(vocab_dict, level_name):
     """単語クイズ機能"""
     st.write(f"### 📚 {level_name}単語クイズ")
     
-    word, correct_meaning = random.choice(list(vocab_dict.items()))
-    other_meanings = [meaning for w, meaning in vocab_dict.items() if w != word]
-    wrong_choices = random.sample(other_meanings, min(3, len(other_meanings)))
+    # 新しい問題が必要な場合は生成
+    if st.session_state.current_question is None or st.session_state.current_question["type"] != "vocabulary":
+        st.session_state.current_question = generate_new_question("vocabulary", level_name, vocab_dict)
+        st.session_state.question_answered = False
+        st.session_state.show_result = False
     
-    all_choices = [correct_meaning] + wrong_choices
-    random.shuffle(all_choices)
+    question = st.session_state.current_question
+    st.write(f"**単語の意味を選んでください: '{question['word']}'**")
     
-    st.write(f"**単語の意味を選んでください: '{word}'**")
+    # 回答が完了していない場合のみ選択肢を表示
+    if not st.session_state.question_answered:
+        user_answer = st.radio("選択肢:", question['choices'], key="vocab_choice")
+        
+        if st.button("回答する", key="submit_vocab"):
+            st.session_state.total_questions += 1
+            st.session_state.question_answered = True
+            st.session_state.show_result = True
+            st.session_state.user_answer = user_answer
+            
+            if user_answer == question['correct_answer']:
+                st.session_state.score += 1
+                st.session_state.result_message = "🎉 正解です！"
+                st.session_state.result_type = "success"
+            else:
+                st.session_state.result_message = f"❌ 不正解です。正解は: **{question['correct_answer']}**"
+                st.session_state.result_type = "error"
+            st.rerun()
     
-    key = f"vocab_{level_name}_{word}_{random.randint(1000, 9999)}"
-    user_answer = st.radio("選択肢:", all_choices, key=key)
-    
-    if st.button("回答する", key=f"submit_{key}"):
-        st.session_state.total_questions += 1
-        if user_answer == correct_meaning:
-            st.session_state.score += 1
-            st.success("🎉 正解です！")
+    # 結果表示と次の問題ボタン
+    if st.session_state.show_result:
+        if st.session_state.result_type == "success":
+            st.success(st.session_state.result_message)
         else:
-            st.error(f"❌ 不正解です。正解は: **{correct_meaning}**")
+            st.error(st.session_state.result_message)
         
         st.info(f"単語スコア: {st.session_state.score}/{st.session_state.total_questions}")
+        
+        if st.button("🔄 次の問題", key="next_vocab"):
+            st.session_state.current_question = None
+            st.session_state.question_answered = False
+            st.session_state.show_result = False
+            st.rerun()
 
 def grammar_quiz(grammar_type, level):
     """文法クイズ機能"""
     st.write(f"### ✍️ {grammar_type} - {level}レベル")
     
-    if grammar_type not in grammar_questions or level not in grammar_questions[grammar_type]:
+    # 新しい問題が必要な場合は生成
+    if st.session_state.current_question is None or st.session_state.current_question["type"] != "grammar":
+        st.session_state.current_question = generate_new_question("grammar", grammar_type=grammar_type, level=level)
+        st.session_state.question_answered = False
+        st.session_state.show_result = False
+    
+    if st.session_state.current_question is None:
         st.warning("この組み合わせの問題はまだ準備中です。")
         return
     
-    question_data = random.choice(grammar_questions[grammar_type][level])
+    question = st.session_state.current_question
+    question_data = question['question_data']
     
     st.write(f"**適切な語句を選んでください:**")
     st.write(f"```{question_data['question']}```")
     
-    key = f"grammar_{grammar_type}_{level}_{random.randint(1000, 9999)}"
-    user_choice = st.radio("選択肢:", question_data['choices'], key=key)
-    
-    if st.button("回答する", key=f"submit_{key}"):
-        st.session_state.grammar_total += 1
-        if user_choice == question_data['choices'][question_data['correct']]:
-            st.session_state.grammar_score += 1
-            st.success("🎉 正解です！")
-        else:
+    # 回答が完了していない場合のみ選択肢を表示
+    if not st.session_state.question_answered:
+        user_choice = st.radio("選択肢:", question_data['choices'], key="grammar_choice")
+        
+        if st.button("回答する", key="submit_grammar"):
+            st.session_state.grammar_total += 1
+            st.session_state.question_answered = True
+            st.session_state.show_result = True
+            st.session_state.user_answer = user_choice
+            
             correct_answer = question_data['choices'][question_data['correct']]
-            st.error(f"❌ 不正解です。正解は: **{correct_answer}**")
+            if user_choice == correct_answer:
+                st.session_state.grammar_score += 1
+                st.session_state.result_message = "🎉 正解です！"
+                st.session_state.result_type = "success"
+            else:
+                st.session_state.result_message = f"❌ 不正解です。正解は: **{correct_answer}**"
+                st.session_state.result_type = "error"
+            st.rerun()
+    
+    # 結果表示と次の問題ボタン
+    if st.session_state.show_result:
+        if st.session_state.result_type == "success":
+            st.success(st.session_state.result_message)
+        else:
+            st.error(st.session_state.result_message)
         
         st.info(f"💡 **解説**: {question_data['explanation']}")
         st.info(f"文法スコア: {st.session_state.grammar_score}/{st.session_state.grammar_total}")
+        
+        if st.button("🔄 次の問題", key="next_grammar"):
+            st.session_state.current_question = None
+            st.session_state.question_answered = False
+            st.session_state.show_result = False
+            st.rerun()
 
 def contextual_quiz(level):
     """文脈問題クイズ"""
     st.write(f"### 📖 文脈問題 - {level}レベル")
     
-    sentence, data = random.choice(list(contextual_questions[level].items()))
-    choices = data['choices']
-    explanation = data['explanation']
+    # 新しい問題が必要な場合は生成
+    if st.session_state.current_question is None or st.session_state.current_question["type"] != "context":
+        st.session_state.current_question = generate_new_question("context", level=level)
+        st.session_state.question_answered = False
+        st.session_state.show_result = False
     
-    correct_answer = choices[0]
-    shuffled_choices = choices.copy()
-    random.shuffle(shuffled_choices)
+    question = st.session_state.current_question
     
     st.write("**文脈に最も適した語句を選んでください:**")
-    st.write(sentence.replace("__", "______"))
+    st.write(question['sentence'].replace("__", "______"))
     
-    key = f"context_{level}_{random.randint(1000, 9999)}"
-    user_answer = st.radio("選択肢:", shuffled_choices, key=key)
-    
-    if st.button("回答する", key=f"submit_{key}"):
-        st.session_state.total_questions += 1
-        if user_answer == correct_answer:
-            st.session_state.score += 1
-            st.success("🎉 正解です！")
-        else:
-            st.error(f"❌ 不正解です。正解は: **{correct_answer}**")
+    # 回答が完了していない場合のみ選択肢を表示
+    if not st.session_state.question_answered:
+        user_answer = st.radio("選択肢:", question['choices'], key="context_choice")
         
-        st.info(f"💡 **解説**: {explanation}")
+        if st.button("回答する", key="submit_context"):
+            st.session_state.total_questions += 1
+            st.session_state.question_answered = True
+            st.session_state.show_result = True
+            st.session_state.user_answer = user_answer
+            
+            if user_answer == question['correct_answer']:
+                st.session_state.score += 1
+                st.session_state.result_message = "🎉 正解です！"
+                st.session_state.result_type = "success"
+            else:
+                st.session_state.result_message = f"❌ 不正解です。正解は: **{question['correct_answer']}**"
+                st.session_state.result_type = "error"
+            st.rerun()
+    
+    # 結果表示と次の問題ボタン
+    if st.session_state.show_result:
+        if st.session_state.result_type == "success":
+            st.success(st.session_state.result_message)
+        else:
+            st.error(st.session_state.result_message)
+        
+        st.info(f"💡 **解説**: {question['explanation']}")
         st.info(f"文脈スコア: {st.session_state.score}/{st.session_state.total_questions}")
+        
+        if st.button("🔄 次の問題", key="next_context"):
+            st.session_state.current_question = None
+            st.session_state.question_answered = False
+            st.session_state.show_result = False
+            st.rerun()
 
 def show_statistics():
     """統計表示"""
@@ -456,7 +577,11 @@ def show_statistics():
             st.session_state.total_questions = 0
             st.session_state.grammar_score = 0
             st.session_state.grammar_total = 0
+            st.session_state.current_question = None
+            st.session_state.question_answered = False
+            st.session_state.show_result = False
             st.success("リセット完了！")
+            st.rerun()
 
 def main_quiz():
     """メインクイズページ"""
@@ -469,6 +594,15 @@ def main_quiz():
         "📖 学習タイプを選択:",
         ["単語学習", "文法学習", "文脈問題", "ミックス学習"]
     )
+    
+    # 学習タイプが変わったら現在の問題をリセット
+    if 'current_study_type' not in st.session_state:
+        st.session_state.current_study_type = study_type
+    elif st.session_state.current_study_type != study_type:
+        st.session_state.current_study_type = study_type
+        st.session_state.current_question = None
+        st.session_state.question_answered = False
+        st.session_state.show_result = False
     
     if study_type == "単語学習":
         level = st.selectbox("難易度:", ["基礎", "中級", "上級"])
@@ -501,8 +635,13 @@ def main_quiz():
         level = st.selectbox("難易度:", ["基礎", "中級", "上級"])
         st.write("---")
         
-        quiz_types = ["vocabulary", "grammar", "context"]
-        selected_type = random.choice(quiz_types)
+        # ミックス学習では問題タイプも保存して管理
+        if 'current_mix_type' not in st.session_state or st.session_state.current_question is None:
+            quiz_types = ["vocabulary", "grammar", "context"]
+            selected_type = random.choice(quiz_types)
+            st.session_state.current_mix_type = selected_type
+        else:
+            selected_type = st.session_state.current_mix_type
         
         if selected_type == "vocabulary":
             st.write("🎲 **ランダム問題: 単語**")
@@ -524,7 +663,11 @@ def main_quiz():
                     available_grammar.append(grammar_type)
             
             if available_grammar:
-                grammar_type = random.choice(available_grammar)
+                if 'current_grammar_type' not in st.session_state or st.session_state.current_question is None:
+                    grammar_type = random.choice(available_grammar)
+                    st.session_state.current_grammar_type = grammar_type
+                else:
+                    grammar_type = st.session_state.current_grammar_type
                 grammar_quiz(grammar_type, target_level)
             else:
                 st.info("この難易度の文法問題はありません。")
@@ -533,11 +676,6 @@ def main_quiz():
             st.write("🎲 **ランダム問題: 文脈**")
             level_map = {"基礎": "basic", "中級": "intermediate", "上級": "advanced"}
             contextual_quiz(level_map[level])
-    
-    # 新しい問題ボタン
-    st.write("---")
-    if st.button("🔄 新しい問題"):
-        st.rerun()
 
 def show_reference():
     """参考資料ページ"""
@@ -578,8 +716,64 @@ def show_reference():
                     - 現在完了形: 過去から現在への継続・完了・経験
                     - 未来完了形: 未来のある時点までの完了
                     - 仮定法: 事実に反する仮定
-                　　""")
-            
+                    """)
+                elif grammar_type == "受動態":
+                    st.write("""
+                    **受動態の基本:**
+                    - 基本形: be動詞 + 過去分詞
+                    - 時制に応じてbe動詞を変化
+                    - by + 行為者(省略可能)
+                    """)
+                elif grammar_type == "不定詞・動名詞":
+                    st.write("""
+                    **不定詞と動名詞:**
+                    - 不定詞: to + 動詞の原形
+                    - 動名詞: 動詞のing形(名詞的用法)
+                    - 動詞によって取る形が決まる
+                    """)
+                elif grammar_type == "関係詞":
+                    st.write("""
+                    **関係詞の基本:**
+                    - who/whom: 人が先行詞
+                    - which: 物が先行詞
+                    - that: 人・物両方可能
+                    - where/when: 関係副詞
+                    """)
+                elif grammar_type == "仮定法":
+                    st.write("""
+                    **仮定法:**
+                    - 仮定法過去: 現在の事実に反する仮定
+                    - 仮定法過去完了: 過去の事実に反する仮定
+                    - 混合仮定法: 時制が異なる仮定
+                    """)
+    
+    with tab3:
+        st.header("💡 効果的な学習方法")
+        
+        st.write("""
+        ### 🎯 単語学習のコツ
+        1. **文脈で覚える**: 単語を文章の中で理解する
+        2. **反復練習**: 定期的に復習して記憶を定着させる
+        3. **関連語をまとめて**: 同義語・反義語・派生語を一緒に覚える
+        4. **実際に使う**: 作文や会話で積極的に使用する
+        """)
+        
+        st.write("""
+        ### 📚 文法学習のコツ
+        1. **基本から応用へ**: 基礎をしっかり固めてから発展問題へ
+        2. **例文で理解**: 文法規則を例文で確認する
+        3. **間違いから学ぶ**: 間違えた問題は解説をよく読む
+        4. **パターン認識**: 似た構文をまとめて整理する
+        """)
+        
+        st.write("""
+        ### 🏆 効果的な復習方法
+        - 間違えた問題は翌日、1週間後、1ヶ月後に再確認
+        - 正答率が90%以上になるまで繰り返す
+        - 定期的に総復習テストを実施
+        - 学習記録をつけて進捗を可視化
+        """)
+
 def show_progress_tracker():
     """学習進捗追跡ページ"""
     st.title("📈 学習進捗トラッカー")
@@ -655,6 +849,9 @@ def show_progress_tracker():
 
 # メイン実行部分
 if __name__ == "__main__":
+    # セッション状態初期化
+    initialize_session_state()
+    
     # ページナビゲーション
     page = st.sidebar.radio(
         "📍 ページ選択",
@@ -667,59 +864,3 @@ if __name__ == "__main__":
         show_reference()
     else:
         show_progress_tracker()
-    if grammar_type == "受動態":
-         st.write("""
-        **受動態の基本:**
-        - 基本形: be動詞 + 過去分詞
-        - 時制に応じてbe動詞を変化
-        - by + 行為者(省略可能)           
-        """)
-    elif grammar_type == "不定詞・動名詞":
-        st.write("""
-        **不定詞と動名詞:**
-        - 不定詞: to + 動詞の原形
-        - 動名詞: 動詞のing形(名詞的用法)
-        - 動詞によって取る形が決まる
-        """)
-    elif grammar_type == "関係詞":
-        st.write("""
-        **関係詞の基本:**
-        - who/whom: 人が先行詞
-        - which: 物が先行詞
-        - that: 人・物両方可能
-        - where/when: 関係副詞
-        """)
-    elif grammar_type == "仮定法":
-        st.write("""
-        **仮定法:**
-        - 仮定法過去: 現在の事実に反する仮定
-        - 仮定法過去完了: 過去の事実に反する仮定
-        - 混合仮定法: 時制が異なる仮定
-        """)
-    
-    with tab3:
-        st.header("💡 効果的な学習方法")
-        
-        st.write("""
-        ### 🎯 単語学習のコツ
-        1. **文脈で覚える**: 単語を文章の中で理解する
-        2. **反復練習**: 定期的に復習して記憶を定着させる
-        3. **関連語をまとめて**: 同義語・反義語・派生語を一緒に覚える
-        4. **実際に使う**: 作文や会話で積極的に使用する
-        """)
-        
-        st.write("""
-        ### 📚 文法学習のコツ
-        1. **基本から応用へ**: 基礎をしっかり固めてから発展問題へ
-        2. **例文で理解**: 文法規則を例文で確認する
-        3. **間違いから学ぶ**: 間違えた問題は解説をよく読む
-        4. **パターン認識**: 似た構文をまとめて整理する
-        """)
-        
-        ### 🏆 効果的な復習方法
-        st.write("""
-        - 間違えた問題は翌日,1週間後,1ヶ月後に再確認
-        - 正答率が90%以上になるまで繰り返す
-        - 定期的に総復習テストを実施
-        - 学習記録をつけて進捗を可視化
-        """)
