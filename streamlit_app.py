@@ -343,17 +343,15 @@ def vocabulary_quiz(vocab_dict, level_name):
     key = f"vocab_{level_name}_{word}_{random.randint(1000, 9999)}"
     user_answer = st.radio("選択肢:", all_choices, key=key)
     
-    # vocabulary_quiz 関数内でこのように修正：
-if st.button("回答する", key="vocab_submit"):
-    st.session_state.total_questions += 1
-    if user_answer == correct_meaning:
-        st.session_state.score += 1
-        st.success("🎉 正解です！")
-    else:
-        st.error(f"❌ 不正解です。正解は: **{correct_meaning}**")
-    
-    st.info(f"単語スコア: {st.session_state.score}/{st.session_state.total_questions}")
-    # ❌ 問題番号はここでは進めない（←これがポイント！）
+    if st.button("回答する", key=f"submit_{key}"):
+        st.session_state.total_questions += 1
+        if user_answer == correct_meaning:
+            st.session_state.score += 1
+            st.success("🎉 正解です！")
+        else:
+            st.error(f"❌ 不正解です。正解は: **{correct_meaning}**")
+        
+        st.info(f"単語スコア: {st.session_state.score}/{st.session_state.total_questions}")
 
 def grammar_quiz(grammar_type, level):
     """文法クイズ機能"""
@@ -536,6 +534,7 @@ def main_quiz():
             level_map = {"基礎": "basic", "中級": "intermediate", "上級": "advanced"}
             contextual_quiz(level_map[level])
     
+
     # 🔄 新しい問題ボタンを押したときだけ問題を進める
 st.write("---")
 if st.button("🔄 新しい問題"):
