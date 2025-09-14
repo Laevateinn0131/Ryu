@@ -134,26 +134,29 @@ if 'answered' not in st.session_state:
 
 # 単語の意味を選ぶ問題（難易度別）
 def vocabulary_quiz(vocab, quiz_type="meaning"):
-    # ランダムに単語を選ぶ
-    word, correct_meaning = random.choice(list(vocab.items()))
-    
-    # 意味の候補を作成（正解 + 他の意味3つ）
-    other_meanings = [meaning for w, meaning in vocab.items() if w != word]
-    wrong_choices = random.sample(other_meanings, min(3, len(other_meanings)))
-    
-    # 選択肢をシャッフル
-    all_choices = [correct_meaning] + wrong_choices
-    random.shuffle(all_choices)
-    
-    # ユーザーに問題を出題
+    if 'current_vocab_question' not in st.session_state:
+        word, correct_meaning = random.choice(list(vocab.items()))
+        other_meanings = [meaning for w, meaning in vocab.items() if w != word]
+        wrong_choices = random.sample(other_meanings, min(3, len(other_meanings)))
+        all_choices = [correct_meaning] + wrong_choices
+        random.shuffle(all_choices)
+
+        st.session_state.current_vocab_question = {
+            "word": word,
+            "correct_meaning": correct_meaning,
+            "choices": all_choices
+        }
+
+    question_data = st.session_state.current_vocab_question
+    word = question_data["word"]
+    correct_meaning = question_data["correct_meaning"]
+    choices = question_data["choices"]
+
     st.write(f"**Question: What is the meaning of '{word}'?**")
-    
-    # ユニークなキーを生成
-    key = f"vocab_{quiz_type}_{word}_{random.randint(1000, 9999)}"
-    
-    user_answer = st.radio("Choose your answer:", all_choices, key=key)
-    
-    # 回答ボタン
+
+    key = f"vocab_{quiz_type}_{word}"
+    user_answer = st.radio("Choose your answer:", choices, key=key)
+
     if st.button("Submit Answer", key=f"submit_{key}"):
         st.session_state.total_questions += 1
         if user_answer == correct_meaning:
@@ -161,32 +164,41 @@ def vocabulary_quiz(vocab, quiz_type="meaning"):
             st.success("🎉 Correct!")
         else:
             st.error(f"❌ Wrong! The correct answer is: **{correct_meaning}**")
-        
-        # スコア表示
+
         st.info(f"Current Score: {st.session_state.score}/{st.session_state.total_questions}")
+
+        # 次の問題に備えて保存された問題を削除
+        del st.session_state.current_vocab_question
 
 # 文脈に適した単語を選ぶ問題（難易度別）
 def contextual_quiz(contextual_vocab, quiz_type="context"):
-    # ランダムに文脈と選択肢を選ぶ
-    sentence, data = random.choice(list(contextual_vocab.items()))
-    choices = data["choices"]
-    explanation = data["explanation"]
-    
-    # 選択肢をシャッフル（正解の位置を記録）
-    correct_answer = choices[0]  # 正解は常に最初の選択肢として定義
-    shuffled_choices = choices.copy()
-    random.shuffle(shuffled_choices)
-    
-    # ユーザーに問題を出題
-    st.write(f"**Question: Choose the word that best fits the blank:**")
+    if 'current_context_question' not in st.session_state:
+        sentence, data = random.choice(list(contextual_vocab.items()))
+        choices = data["choices"]
+        explanation = data["explanation"]
+        correct_answer = choices[0]
+        shuffled_choices = choices.copy()
+        random.shuffle(shuffled_choices)
+
+        st.session_state.current_context_question = {
+            "sentence": sentence,
+            "choices": shuffled_choices,
+            "correct": correct_answer,
+            "explanation": explanation
+        }
+
+    q = st.session_state.current_context_question
+    sentence = q["sentence"]
+    choices = q["choices"]
+    correct_answer = q["correct"]
+    explanation = q["explanation"]
+
+    st.write("**Question: Choose the word that best fits the blank:**")
     st.write(sentence.replace("__", "______"))
-    
-    # ユニークなキーを生成
+
     key = f"context_{quiz_type}_{random.randint(1000, 9999)}"
-    
-    user_answer = st.radio("Choose your answer:", shuffled_choices, key=key)
-    
-    # 回答ボタン
+    user_answer = st.radio("Choose your answer:", choices, key=key)
+
     if st.button("Submit Answer", key=f"submit_{key}"):
         st.session_state.total_questions += 1
         if user_answer == correct_answer:
@@ -196,9 +208,11 @@ def contextual_quiz(contextual_vocab, quiz_type="context"):
         else:
             st.error(f"❌ Wrong! The correct answer is: **{correct_answer}**")
             st.info(f"💡 {explanation}")
-        
-        # スコア表示
+
         st.info(f"Current Score: {st.session_state.score}/{st.session_state.total_questions}")
+
+        # 次の問題に備えてセッションの問題を削除
+        del st.session_state.current_context_question
 
 # スコアリセット機能
 def reset_score():
