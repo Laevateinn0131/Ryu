@@ -667,6 +667,11 @@ if __name__ == "__main__":
         show_reference()
     else:
         show_progress_tracker()
+        grammar_type = st.selectbox(
+    "文法項目を選択してください：",
+    ["受動態", "不定詞・動名詞", "関係詞", "仮定法"]
+)
+
     if grammar_type == "受動態":
         st.write("""
         **受動態の基本:**
