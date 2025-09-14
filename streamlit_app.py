@@ -367,21 +367,23 @@ def vocabulary_quiz(vocab_dict, level_name):
         st.session_state.vocab_current_question += 1
 
 def grammar_quiz(grammar_type, level):
-    """文法クイズ機能"""
-    st.write(f"### ✍️ {grammar_type} - {level}レベル")
-    
+    if 'grammar_current_question' not in st.session_state:
+        st.session_state.grammar_current_question = 0
+
     if grammar_type not in grammar_questions or level not in grammar_questions[grammar_type]:
         st.warning("この組み合わせの問題はまだ準備中です。")
         return
-    
-    question_data = random.choice(grammar_questions[grammar_type][level])
-    
+
+    questions = grammar_questions[grammar_type][level]
+    question_data = questions[st.session_state.grammar_current_question % len(questions)]
+
+    # 問題表示など
     st.write(f"**適切な語句を選んでください:**")
     st.write(f"```{question_data['question']}```")
-    
-    key = f"grammar_{grammar_type}_{level}_{random.randint(1000, 9999)}"
+
+    key = f"grammar_{grammar_type}_{level}_{st.session_state.grammar_current_question}"
     user_choice = st.radio("選択肢:", question_data['choices'], key=key)
-    
+
     if st.button("回答する", key=f"submit_{key}"):
         st.session_state.grammar_total += 1
         if user_choice == question_data['choices'][question_data['correct']]:
@@ -390,28 +392,34 @@ def grammar_quiz(grammar_type, level):
         else:
             correct_answer = question_data['choices'][question_data['correct']]
             st.error(f"❌ 不正解です。正解は: **{correct_answer}**")
-        
+
         st.info(f"💡 **解説**: {question_data['explanation']}")
+
+        # 次の問題へ
+        st.session_state.grammar_current_question += 1
+
         st.info(f"文法スコア: {st.session_state.grammar_score}/{st.session_state.grammar_total}")
 
 def contextual_quiz(level):
-    """文脈問題クイズ"""
-    st.write(f"### 📖 文脈問題 - {level}レベル")
-    
-    sentence, data = random.choice(list(contextual_questions[level].items()))
+    if 'context_current_question' not in st.session_state:
+        st.session_state.context_current_question = 0
+
+    items = list(contextual_questions[level].items())
+    sentence, data = items[st.session_state.context_current_question % len(items)]
+
     choices = data['choices']
     explanation = data['explanation']
-    
+
     correct_answer = choices[0]
     shuffled_choices = choices.copy()
     random.shuffle(shuffled_choices)
-    
+
     st.write("**文脈に最も適した語句を選んでください:**")
     st.write(sentence.replace("__", "______"))
-    
-    key = f"context_{level}_{random.randint(1000, 9999)}"
+
+    key = f"context_{level}_{st.session_state.context_current_question}"
     user_answer = st.radio("選択肢:", shuffled_choices, key=key)
-    
+
     if st.button("回答する", key=f"submit_{key}"):
         st.session_state.total_questions += 1
         if user_answer == correct_answer:
@@ -419,138 +427,14 @@ def contextual_quiz(level):
             st.success("🎉 正解です！")
         else:
             st.error(f"❌ 不正解です。正解は: **{correct_answer}**")
-        
+
         st.info(f"💡 **解説**: {explanation}")
+
+        # 次の問題へ
+        st.session_state.context_current_question += 1
+
         st.info(f"文脈スコア: {st.session_state.score}/{st.session_state.total_questions}")
 
-def show_statistics():
-    """統計表示"""
-    with st.sidebar:
-        st.header("📊 学習統計")
-        
-        # 単語統計
-        st.subheader("📚 単語・文脈")
-        if st.session_state.total_questions > 0:
-            vocab_accuracy = (st.session_state.score / st.session_state.total_questions) * 100
-            st.metric("正解数", f"{st.session_state.score}/{st.session_state.total_questions}")
-            st.metric("正答率", f"{vocab_accuracy:.1f}%")
-        else:
-            st.write("まだ問題に答えていません")
-        
-        # 文法統計
-        st.subheader("✍️ 文法")
-        if st.session_state.grammar_total > 0:
-            grammar_accuracy = (st.session_state.grammar_score / st.session_state.grammar_total) * 100
-            st.metric("正解数", f"{st.session_state.grammar_score}/{st.session_state.grammar_total}")
-            st.metric("正答率", f"{grammar_accuracy:.1f}%")
-        else:
-            st.write("まだ問題に答えていません")
-        
-        # 総合評価
-        total_score = st.session_state.score + st.session_state.grammar_score
-        total_questions = st.session_state.total_questions + st.session_state.grammar_total
-        
-        if total_questions > 0:
-            overall_accuracy = (total_score / total_questions) * 100
-            st.subheader("🏆 総合")
-            st.metric("総合正答率", f"{overall_accuracy:.1f}%")
-            
-            if overall_accuracy >= 90:
-                st.success("🌟 素晴らしい！")
-            elif overall_accuracy >= 80:
-                st.info("😊 良い成績です！")
-            elif overall_accuracy >= 70:
-                st.warning("📚 もう少し！")
-            else:
-                st.error("💪 頑張りましょう！")
-        
-        if st.button("📈 スコアリセット"):
-            st.session_state.score = 0
-            st.session_state.total_questions = 0
-            st.session_state.grammar_score = 0
-            st.session_state.grammar_total = 0
-            st.success("リセット完了！")
-
-def main_quiz():
-    """メインクイズページ"""
-    st.title("🎓 高校英語総合学習アプリ")
-    
-    show_statistics()
-    
-    # 学習タイプ選択
-    study_type = st.selectbox(
-        "📖 学習タイプを選択:",
-        ["単語学習", "文法学習", "文脈問題", "ミックス学習"]
-    )
-    
-    if study_type == "単語学習":
-        level = st.selectbox("難易度:", ["基礎", "中級", "上級"])
-        st.write("---")
-        
-        if level == "基礎":
-            vocabulary_quiz(basic_vocabulary, "基礎")
-        elif level == "中級":
-            vocabulary_quiz(intermediate_vocabulary, "中級")
-        else:
-            vocabulary_quiz(advanced_vocabulary, "上級")
-    
-    elif study_type == "文法学習":
-        col1, col2 = st.columns(2)
-        with col1:
-            grammar_type = st.selectbox("文法項目:", list(grammar_questions.keys()))
-        with col2:
-            available_levels = list(grammar_questions[grammar_type].keys())
-            level = st.selectbox("難易度:", available_levels)
-        
-        st.write("---")
-        grammar_quiz(grammar_type, level)
-    
-    elif study_type == "文脈問題":
-        level = st.selectbox("難易度:", ["basic", "intermediate", "advanced"])
-        st.write("---")
-        contextual_quiz(level)
-    
-    else:  # ミックス学習
-        level = st.selectbox("難易度:", ["基礎", "中級", "上級"])
-        st.write("---")
-        
-        quiz_types = ["vocabulary", "grammar", "context"]
-        selected_type = random.choice(quiz_types)
-        
-        if selected_type == "vocabulary":
-            st.write("🎲 **ランダム問題: 単語**")
-            if level == "基礎":
-                vocabulary_quiz(basic_vocabulary, "基礎")
-            elif level == "中級":
-                vocabulary_quiz(intermediate_vocabulary, "中級")
-            else:
-                vocabulary_quiz(advanced_vocabulary, "上級")
-        
-        elif selected_type == "grammar":
-            st.write("🎲 **ランダム問題: 文法**")
-            available_grammar = []
-            level_map = {"基礎": "basic", "中級": "intermediate", "上級": "advanced"}
-            target_level = level_map[level]
-            
-            for grammar_type, levels in grammar_questions.items():
-                if target_level in levels:
-                    available_grammar.append(grammar_type)
-            
-            if available_grammar:
-                grammar_type = random.choice(available_grammar)
-                grammar_quiz(grammar_type, target_level)
-            else:
-                st.info("この難易度の文法問題はありません。")
-        
-        else:  # context
-            st.write("🎲 **ランダム問題: 文脈**")
-            level_map = {"基礎": "basic", "中級": "intermediate", "上級": "advanced"}
-            contextual_quiz(level_map[level])
-    
-    # 新しい問題ボタン
-    st.write("---")
-    if st.button("🔄 新しい問題"):
-        st.rerun()
 
 def show_reference():
     """参考資料ページ"""
